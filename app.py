@@ -964,6 +964,7 @@ def clean_data(start_date, end_date):
     temp[integers] = temp[integers].replace(
         '', 0).replace('None', 0).astype(int)
     temp = temp.replace('', np.nan).replace('None', np.nan)
+    print(temp)
     return temp.to_json(date_format='iso', orient='split')
 
 
