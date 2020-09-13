@@ -909,7 +909,6 @@ def clean_data(start_date, end_date):
     gsheet = get_google_sheet()  # Use credentials to get entire sheet from API
     # Convert the values into a Pandas DataFrame for data manipulation below
     df = gsheet2df(gsheet)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
     df['date'] = pd.to_datetime(df.date)
     df['Week'] = df['date'].dt.isocalendar().week
     df['quarter'] = df['date'].dt.quarter.astype(str)
@@ -941,7 +940,6 @@ def clean_quarter_data(quarter):
     """
     gsheet = get_google_sheet()
     df = gsheet2df(gsheet)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
     df['date'] = pd.to_datetime(df.date)
     df['Week'] = df['date'].dt.isocalendar().week
     df['quarter'] = df['date'].dt.quarter.astype(str)
