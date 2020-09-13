@@ -88,7 +88,9 @@ def gsheet2df(gsheet):
 
 
 server = Flask(__name__)
-VALID_USERNAME_PASSWORD_PAIRS = os.environ['VALID_USERNAME_PASSWORD_PAIRS']
+PASS_ = os.environ['VALID_USERNAME_PASSWORD_PAIRS']
+VALID_USERNAME_PASSWORD_PAIRS = {'demo': PASS_}
+
 
 app = Dash(name=__name__,
            server=server,
