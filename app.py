@@ -207,7 +207,7 @@ app.layout = html.Div(
         dcc.Markdown("""
                 # Filtered Map
                 ---
-                -  Use this map to filter specific MD's or riding disciplines
+                -  Use this map to filter specific BD's or riding disciplines
                 -  Select one or more from either dropdown below
                 """,
                      style={
@@ -219,17 +219,17 @@ app.layout = html.Div(
         html.Br(),
         dbc.Row([
                 dbc.Col([
-                    html.Label('Market Developer(s)',
+                    html.Label('Brand Developer(s)',
                                style={
                                    'font-family': 'plain',
                                    'font-weight': 'light'
                                }),
-                    dcc.Dropdown(id='MD Dropdown',
+                    dcc.Dropdown(id='BD Dropdown',
                                  options=[{
-                                     'label': 'All MDs',
-                                     'value': 'All MDs'
+                                     'label': 'All BDs',
+                                     'value': 'All BDs'
                                  }],
-                                 value=['All MDs'],
+                                 value=['All BDs'],
                                  multi=True,
                                  style={
                                      'font-family': 'plain',
@@ -332,7 +332,7 @@ app.layout = html.Div(
                 ---
                 -  Choose Quarter from dropdown
                 -  Highlighted cells have met bonus criteria
-                -  Select MD in table to see individual bar charts
+                -  Select BD in table to see individual bar charts
                 """,
                      style={
                          'font-family': 'plain light',
@@ -564,7 +564,7 @@ def build_main_map(jsonified_cleaned_data):
         fig.add_trace(go.Scattergeo(
             lon=df.loc[df[key] > 0, 'longitude'],
             lat=df.loc[df[key] > 0, 'latitude'],
-            text=df.loc[df[key] > 0, 'market_developer'],
+            text=df.loc[df[key] > 0, 'brand_developer'],
             customdata=df[key].loc[df[key] > 0],
             marker=dict(
                 size=df[key].loc[df[key] > 0]/scale,
@@ -573,7 +573,7 @@ def build_main_map(jsonified_cleaned_data):
                 line_width=0.9,
                 sizemode='area'
             ),
-            hovertemplate="MD: <b>%{text}</b><br><br>" +
+            hovertemplate="BD: <b>%{text}</b><br><br>" +
             "Audience: %{customdata}<br>" +
             '<extra></extra>',
             name=name
@@ -584,7 +584,7 @@ def build_main_map(jsonified_cleaned_data):
                    'longitude'],
         lat=df.loc[~df['shop_assist_retail_partner'].isnull(), 'latitude'],
         text=df.loc[~df['shop_assist_retail_partner'].isnull(),
-                    'market_developer'],
+                    'brand_developer'],
         customdata=df['shop_assist_retail_partner'].loc[~df['shop_assist_retail_partner'].isnull()],
         marker=dict(
             symbol='star-diamond',
@@ -594,7 +594,7 @@ def build_main_map(jsonified_cleaned_data):
             line_width=0.9,
             sizemode='area'
         ),
-        hovertemplate="MD: <b>%{text}</b><br><br>" +
+        hovertemplate="BD: <b>%{text}</b><br><br>" +
         "Shop Name: %{customdata}<br>" +
         '<extra></extra>',
         name="Shop Assist"
@@ -617,13 +617,13 @@ def build_main_map(jsonified_cleaned_data):
 
 
 @ app.callback(
-    Output('MD Dropdown', 'options'),
+    Output('BD Dropdown', 'options'),
     [Input('intermediate_value_date', 'children')]
 )
-def build_MD_dropdown(jsonified_cleaned_data):
+def build_BD_dropdown(jsonified_cleaned_data):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
-    LIST = [{'label': 'All MDs', 'value': 'All MDs'}]
-    TEMP = list(df['market_developer'].unique())
+    LIST = [{'label': 'All BDs', 'value': 'All BDs'}]
+    TEMP = list(df['brand_developer'].unique())
     for i in TEMP:
         LIST.append({"label": i, "value": i})
     return LIST
@@ -647,16 +647,16 @@ def build_ride_type_dropdown(jsonified_cleaned_data):
     Output('label_filtered_activations', 'children'),
     Output('label_filtered_staff', 'children')],
     [Input('intermediate_value_date', 'children'),
-     Input('MD Dropdown', 'value'),
+     Input('BD Dropdown', 'value'),
      Input('Ride Type Dropdown', 'value')]
 )
-def label_filtered_bob(jsonified_cleaned_data, MD, ride_type):
+def label_filtered_bob(jsonified_cleaned_data, BD, ride_type):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
-    if MD == ['All MDs']:
-        MD = list(df['market_developer'].unique())
+    if BD == ['All BDs']:
+        BD = list(df['brand_developer'].unique())
     if ride_type == ['All']:
         ride_type = list(df['discipline'].unique())
-    df = df.loc[(df['market_developer'].isin(MD)) &
+    df = df.loc[(df['brand_developer'].isin(BD)) &
                 (df['discipline'].isin(ride_type))]
 
     filtered_bob = df[['demo_bob', 'festival_bob', 'vip_bob',
@@ -672,17 +672,17 @@ def label_filtered_bob(jsonified_cleaned_data, MD, ride_type):
 @ app.callback(
     Output('second_map', 'figure'),
     [Input('intermediate_value_date', 'children'),
-     Input('MD Dropdown', 'value'),
+     Input('BD Dropdown', 'value'),
      Input('Ride Type Dropdown', 'value')]
 )
-def build_second_map(jsonified_cleaned_data, MD, ride_type):
+def build_second_map(jsonified_cleaned_data, BD, ride_type):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     scale = .07
-    if MD == ['All MDs']:
-        MD = list(df['market_developer'].unique())
+    if BD == ['All BDs']:
+        BD = list(df['brand_developer'].unique())
     if ride_type == ['All']:
         ride_type = list(df['discipline'].unique())
-    df = df.loc[(df['market_developer'].isin(MD)) &
+    df = df.loc[(df['brand_developer'].isin(BD)) &
                 (df['discipline'].isin(ride_type))]
 
     df['agg'] = df[['demo_bob', 'staff_count', 'festival_total_attendance',
@@ -695,7 +695,7 @@ def build_second_map(jsonified_cleaned_data, MD, ride_type):
         fig.add_trace(go.Scattergeo(
             lon=df.loc[df['discipline'] == i, 'longitude'],
             lat=df.loc[df['discipline'] == i, 'latitude'],
-            text=df.loc[df['discipline'] == i, 'market_developer'],
+            text=df.loc[df['discipline'] == i, 'brand_developer'],
             customdata=df['agg'].loc[df['discipline'] == i],
             marker=dict(
                 size=df['agg'].loc[df['discipline'] == i]/scale,
@@ -704,7 +704,7 @@ def build_second_map(jsonified_cleaned_data, MD, ride_type):
                 line_width=0.9,
                 sizemode='area'
             ),
-            hovertemplate="MD: <b>%{text}</b><br><br>" +
+            hovertemplate="BD: <b>%{text}</b><br><br>" +
             "Audience: %{customdata}<br>" +
             '<extra></extra>',
             name=i
@@ -715,7 +715,7 @@ def build_second_map(jsonified_cleaned_data, MD, ride_type):
                    'longitude'],
         lat=df.loc[~df['shop_assist_retail_partner'].isnull(), 'latitude'],
         text=df.loc[~df['shop_assist_retail_partner'].isnull(),
-                    'market_developer'],
+                    'brand_developer'],
         customdata=df['shop_assist_retail_partner'].loc[~df['shop_assist_retail_partner'].isnull()],
         marker=dict(
             symbol='star-diamond',
@@ -725,7 +725,7 @@ def build_second_map(jsonified_cleaned_data, MD, ride_type):
             line_width=0.9,
             sizemode='area'
         ),
-        hovertemplate="MD: <b>%{text}</b><br><br>" +
+        hovertemplate="BD: <b>%{text}</b><br><br>" +
         "Shop Name: %{customdata}<br>" +
         '<extra></extra>',
         name="Shop Assist"
@@ -767,16 +767,16 @@ def build_quater_dropdown(jsonified_cleaned_data):
 def build_bonus_table(jsonified_cleaned_data):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     clinics = df.loc[df['activation_type'] == 'Clinic'].groupby(
-        ['market_developer']).agg({'event': 'count'})
+        ['brand_developer']).agg({'event': 'count'})
     activations = df.loc[(df['activation_type'] != 'Clinic') & (
-        df['activation_type'] != 'Trail Day')].groupby(['market_developer']).agg({'event': 'count'})
+        df['activation_type'] != 'Trail Day')].groupby(['brand_developer']).agg({'event': 'count'})
     trail_day = df.loc[df['activation_type'] == 'Trail building day'].groupby(
-        ['market_developer']).agg({'event': 'count'})
-    df = pd.DataFrame(data={'market_developer': list(df.market_developer),
+        ['brand_developer']).agg({'event': 'count'})
+    df = pd.DataFrame(data={'brand_developer': list(df.brand_developer),
                             'total_bob': list(df[['demo_bob', 'festival_bob', 'vip_bob', 'other_event_bob']].sum(axis=1))
                             }
-                      ).set_index('market_developer')
-    df = df.groupby('market_developer').sum()
+                      ).set_index('brand_developer')
+    df = df.groupby('brand_developer').sum()
     df = df.join(clinics, rsuffix='clinics')
     df = df.join(activations, rsuffix='activation')
     df = df.join(trail_day, rsuffix='trail_day')
@@ -798,10 +798,10 @@ def build_bonus_table(jsonified_cleaned_data):
 )
 def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_rows):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
-    md_name = "All"
+    bd_name = "All"
     if slctd_row_indices:
-        md_name = (all_rows_data[slctd_row_indices[0]]['market_developer'])
-        df = df.loc[df['market_developer'] == md_name]
+        bd_name = (all_rows_data[slctd_row_indices[0]]['brand_developer'])
+        df = df.loc[df['brand_developer'] == bd_name]
     clinics = df.loc[df['activation_type'] == 'Clinic'].groupby(
         ['Week']).agg({'event': 'count'})
     activations = df.loc[(df['activation_type'] != 'Clinic') & (
@@ -831,7 +831,7 @@ def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_ro
             hovertemplate='<b>Week</b>:   %{x}' +
                           '<br>Count:  %{y}')
     )
-    fig1.update_layout(title=f'Total Butts on Bikes - {md_name}')
+    fig1.update_layout(title=f'Total Butts on Bikes - {bd_name}')
     fig1.update_xaxes(title='Week', showgrid=False, zeroline=False)
     fig1.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
 
@@ -847,7 +847,7 @@ def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_ro
             hovertemplate='<b>Week</b>:   %{x}' +
                           '<br>Count:  %{y}')
     )
-    fig2.update_layout(title=f'Total Activations - {md_name}')
+    fig2.update_layout(title=f'Total Activations - {bd_name}')
     fig2.update_xaxes(title='Week', showgrid=False, zeroline=False)
     fig2.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
 
@@ -863,7 +863,7 @@ def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_ro
             hovertemplate='<b>Week</b>:   %{x}' +
                           '<br>Count:  %{y}')
     )
-    fig3.update_layout(title=f'Total Clinics - {md_name}')
+    fig3.update_layout(title=f'Total Clinics - {bd_name}')
     fig3.update_xaxes(title='Week', showgrid=False, zeroline=False)
     fig3.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
 
@@ -879,7 +879,7 @@ def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_ro
             hovertemplate='<b>Week</b>:   %{x}' +
                           '<br>Count:  %{y}')
     )
-    fig4.update_layout(title=f'Total Trail Building Days - {md_name}')
+    fig4.update_layout(title=f'Total Trail Building Days - {bd_name}')
     fig4.update_xaxes(title='Week', showgrid=False, zeroline=False)
     fig4.update_yaxes(showgrid=False, showticklabels=False, zeroline=False)
     return fig1, fig2, fig3, fig4
