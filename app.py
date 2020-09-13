@@ -30,7 +30,7 @@ FONTSIZE = 12
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
-# The ID and range of a sample spreadsheet.
+# The ID and range of a google spreadsheet.
 SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
 RANGE_NAME = os.environ['RANGE_NAME']
 
@@ -88,6 +88,7 @@ def gsheet2df(gsheet):
 
 
 server = Flask(__name__)
+
 PASS_ = os.environ['VALID_USERNAME_PASSWORD_PAIRS']
 VALID_USERNAME_PASSWORD_PAIRS = {'demo': PASS_}
 
@@ -108,20 +109,14 @@ app.layout = html.Div(
                          alt="Specialized Wordmark logo",
                          style={
                              'width': '60%',
-                            #  'height': '30%'
                          }),
             ],  width={"size": 6, "offest": 1}), justify="left"
         ),
         dcc.Markdown("""
                 # **_S-WORKS_** Stoke-o-Meter
-                """,
-                     style={
-                         'font-family': 'plain light',
-                         'color': 'Black',
-                         'font-weight': 'light'
-                     }),
-        dcc.Markdown("""
                 ---
+                -  Select date range
+                -  Click legend names on map to isolate activation types
                 """,
                      style={
                          'font-family': 'plain light',
@@ -149,7 +144,6 @@ app.layout = html.Div(
                                 'color': 'grey',
                                 'text-align': 'center',
                                 'font-size': 24,
-                                # 'width': 100
                             }),
                     align="center", width=3),
                 dbc.Col(
@@ -160,7 +154,6 @@ app.layout = html.Div(
                                 'color': 'grey',
                                 'font-size': 24,
                                 'textAlign': 'center'
-
                             }),
                     align="center", width=3),
                 dbc.Col(
@@ -214,6 +207,8 @@ app.layout = html.Div(
         dcc.Markdown("""
                 # Filtered Map
                 ---
+                -  Use this map to filter specific MD's or riding disciplines
+                -  Select one or more from either dropdown below
                 """,
                      style={
                          'font-family': 'plain light',
@@ -224,7 +219,7 @@ app.layout = html.Div(
         html.Br(),
         dbc.Row([
                 dbc.Col([
-                    html.Label('Market Developer',
+                    html.Label('Market Developer(s)',
                                style={
                                    'font-family': 'plain',
                                    'font-weight': 'light'
@@ -244,7 +239,7 @@ app.layout = html.Div(
                 ],
                     width=4),
                 dbc.Col([
-                    html.Label('Ride Type',
+                    html.Label('Ride Type(s)',
                                style={
                                    'font-family': 'plain',
                                    'font-weight': 'light'
@@ -335,6 +330,9 @@ app.layout = html.Div(
         dcc.Markdown("""
                 # Bonus Tracker
                 ---
+                -  Choose Quarter from dropdown
+                -  Highlighted cells have met bonus criteria
+                -  Select MD in table to see individual bar charts
                 """,
                      style={
                          'font-family': 'plain light',
@@ -442,8 +440,11 @@ app.layout = html.Div(
                 ], width=6)
                 ]),
         dcc.Markdown("""
-                # Export all data in this date range: 
+                # Export all data:
                 ---
+                -  Set date range at the top of the page
+                -  Use sort buttons and the filter row to organize data as you 
+                -  Export .csv file of all activities
                 """,
                      style={
                          'font-family': 'plain light',
@@ -516,48 +517,31 @@ app.layout = html.Div(
                          }),
             ], width={"size": 2, "offset": 5}),
         ),
-
         html.Div(id='intermediate_value_date', style={'display': 'none'}),
         html.Div(id='intermediate_value_quarter',
                  style={'display': 'none'}),
-        html.Div(id='intermediate_value_quarter_bar',
-                 style={'display': 'none'}),
+        # html.Div(id='intermediate_value_quarter_bar',
+        #          style={'display': 'none'}),
     ]
     ), style={"padding": "100px"})
 
 
-@ app.callback(
+@ app.callback([
     Output('label_total_bob', 'children'),
+    Output('label_total_activations', 'children'),
+    Output('label_total_staff', 'children')],
     [Input('intermediate_value_date', 'children')]
 )
-def label_total_bob(jsonified_cleaned_data):
+def label_totals(jsonified_cleaned_data):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     total_bob = df[['demo_bob', 'festival_bob', 'vip_bob',
                     'other_event_bob']].sum().sum()
-    text = f'''{total_bob}'''
-    return text
-
-
-@ app.callback(
-    Output('label_total_activations', 'children'),
-    [Input('intermediate_value_date', 'children')]
-)
-def label_total_activations(jsonified_cleaned_data):
-    df = pd.read_json(jsonified_cleaned_data, orient='split')
+    total_bob_text = f'''{total_bob}'''
     total_activations = len(df)
-    text = f'''{total_activations}'''
-    return text
-
-
-@ app.callback(
-    Output('label_total_staff', 'children'),
-    [Input('intermediate_value_date', 'children')]
-)
-def label_total_staff(jsonified_cleaned_data):
-    df = pd.read_json(jsonified_cleaned_data, orient='split')
+    total_activations_text = f'''{total_activations}'''
     total_staff = df['staff_count'].sum()
-    text = f'''{total_staff}'''
-    return text
+    total_staff_text = f'''{total_staff}'''
+    return total_bob_text, total_activations_text, total_staff_text
 
 
 @ app.callback(
@@ -658,8 +642,10 @@ def build_ride_type_dropdown(jsonified_cleaned_data):
     return LIST
 
 
-@ app.callback(
+@ app.callback([
     Output('label_filtered_bob', 'children'),
+    Output('label_filtered_activations', 'children'),
+    Output('label_filtered_staff', 'children')],
     [Input('intermediate_value_date', 'children'),
      Input('MD Dropdown', 'value'),
      Input('Ride Type Dropdown', 'value')]
@@ -675,46 +661,12 @@ def label_filtered_bob(jsonified_cleaned_data, MD, ride_type):
 
     filtered_bob = df[['demo_bob', 'festival_bob', 'vip_bob',
                        'other_event_bob']].sum().sum()
-    text = f'''{filtered_bob}'''
-    return text
-
-
-@ app.callback(
-    Output('label_filtered_activations', 'children'),
-    [Input('intermediate_value_date', 'children'),
-     Input('MD Dropdown', 'value'),
-     Input('Ride Type Dropdown', 'value')]
-)
-def label_filtered_activations(jsonified_cleaned_data, MD, ride_type):
-    df = pd.read_json(jsonified_cleaned_data, orient='split')
-    if MD == ['All MDs']:
-        MD = list(df['market_developer'].unique())
-    if ride_type == ['All']:
-        ride_type = list(df['discipline'].unique())
-    df = df.loc[(df['market_developer'].isin(MD)) &
-                (df['discipline'].isin(ride_type))]
+    filtered_bob_text = f'''{filtered_bob}'''
     filtered_activations = len(df)
-    text = f'''{filtered_activations}'''
-    return text
-
-
-@ app.callback(
-    Output('label_filtered_staff', 'children'),
-    [Input('intermediate_value_date', 'children'),
-     Input('MD Dropdown', 'value'),
-     Input('Ride Type Dropdown', 'value')]
-)
-def label_filtered_staff(jsonified_cleaned_data, MD, ride_type):
-    df = pd.read_json(jsonified_cleaned_data, orient='split')
-    if MD == ['All MDs']:
-        MD = list(df['market_developer'].unique())
-    if ride_type == ['All']:
-        ride_type = list(df['discipline'].unique())
-    df = df.loc[(df['market_developer'].isin(MD)) &
-                (df['discipline'].isin(ride_type))]
+    filtered_activations_text = f'''{filtered_activations}'''
     filtered_staff = df['staff_count'].sum()
-    text = f'''{filtered_staff}'''
-    return text
+    filtered_staff_text = f'''{filtered_staff}'''
+    return filtered_bob_text, filtered_activations_text, filtered_staff_text
 
 
 @ app.callback(
@@ -949,8 +901,13 @@ def build_main_table(jsonified_cleaned_data):
     [Input('dt-picker-range', 'start_date'),
      Input('dt-picker-range', 'end_date')])
 def clean_data(start_date, end_date):
-    # some expensive data pull step
-    gsheet = get_google_sheet()
+    """ 
+    Main data gathering step. 
+    Calls google api to retrieve data from the worksheet. 
+    This function creates a data dict inside a component in order to eliminate a global dataframe variable.
+    """
+    gsheet = get_google_sheet()  # Use credentials to get entire sheet from API
+    # Convert the values into a Pandas DataFrame for data manipulation below
     df = gsheet2df(gsheet)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df['date'] = pd.to_datetime(df.date)
@@ -966,17 +923,22 @@ def clean_data(start_date, end_date):
     temp[integers] = temp[integers].replace(
         '', 0).replace('None', 0).astype(int)
     temp = temp.replace('', np.nan).replace('None', np.nan)
-    print(temp)
+    # Return a string object that can be stored inside a Dash Component.
     return temp.to_json(date_format='iso', orient='split')
 
 
 @ app.callback(
-    [Output('intermediate_value_quarter', 'children'),
-     Output('intermediate_value_quarter_bar', 'children')],
+    Output('intermediate_value_quarter', 'children'),
+    #  Output('intermediate_value_quarter_bar', 'children')
     [Input('quarter_dropdown', 'value')]
 )
 def clean_quarter_data(quarter):
-    # some expensive data pull step
+    """
+    Data call to google sheets api.  
+    Repeating this data step to allow for two separate date configurations:
+        1. Main date range selected by the user.
+        2. This date range which returns specific quarter-year time frames
+    """
     gsheet = get_google_sheet()
     df = gsheet2df(gsheet)
     df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -992,8 +954,7 @@ def clean_quarter_data(quarter):
         '', 0).replace('None', 0).astype(int)
     df = df.replace('', np.nan).replace('None', np.nan)
     df = df.loc[df['year_quarter'] == quarter]
-    df = df.to_json(date_format='iso', orient='split')
-    return df, df
+    return df.to_json(date_format='iso', orient='split')
 
 
 if __name__ == '__main__':
