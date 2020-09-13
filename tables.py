@@ -1,7 +1,7 @@
 import dash_table.FormatTemplate as FormatTemplate
 
 bonus_col = [
-    {'name': 'Market Developer','id': 'market_developer','selectable': False,'hideable': False},
+    {'name': 'Brand Developer','id': 'brand_developer','selectable': False,'hideable': False},
     {'name': 'Total B.O.B.','id': 'total_bob','selectable': False,'hideable': False, 'type': 'numeric'},
     {'name': 'Total Activations','id': 'activation','selectable': False,'hideable': False, 'type': 'numeric'},
     {'name': 'Total Clinics','id': 'clinics','selectable': False,'hideable': False, 'type': 'numeric'},
@@ -9,7 +9,7 @@ bonus_col = [
     ]
 
 bonus_cell_cond = [
-    {'if': {'column_id':'market_developer'},'width':60, 'textAlign':'center', 'margin-center':1},
+    {'if': {'column_id':'brand_developer'},'width':60, 'textAlign':'center', 'margin-center':1},
     {'if': {'column_id':'total_bob'},'width':55, 'textAlign':'center'},
     {'if': {'column_id':'activation'},'width':60, 'textAlign':'center'},
     {'if': {'column_id':'clinics'},'width':60, 'textAlign':'center'},
