@@ -19,10 +19,10 @@ bonus_cell_cond = [
 bonus_data_cond = [
     {'if': {'filter_query': "{total_bob} > 150", 'column_id': 'total_bob'},
             'backgroundColor': '#d2f8d2'},
-    {'if': {'filter_query': "{activation} > 6", 'column_id': 'total_bob'},
+    {'if': {'filter_query': "{activation} > 6", 'column_id': 'activation'},
             'backgroundColor': '#d2f8d2'},
-    {'if': {'filter_query': "{clinics} > 12", 'column_id': 'total_bob'},
+    {'if': {'filter_query': "{clinics} > 12", 'column_id': 'clinics'},
             'backgroundColor': '#d2f8d2'},
-    {'if': {'filter_query': "{trail_day} > 1", 'column_id': 'total_bob'},
+    {'if': {'filter_query': "{trail_day} > 1", 'column_id': 'trail_day'},
             'backgroundColor': '#d2f8d2'},
     ]
