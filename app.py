@@ -21,9 +21,6 @@ import os
 import plotly.graph_objects as go
 from tables import bonus_col, bonus_cell_cond, bonus_data_cond
 
-import googleapiclient
-googleapiclient.__version__
-
 CELL_PADDING = 15
 DATA_PADDING = 15
 TABLE_PADDING = 100
