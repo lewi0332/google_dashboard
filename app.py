@@ -720,7 +720,7 @@ def build_second_map(jsonified_cleaned_data, BD, ride_type):
         marker=dict(
             symbol='star-diamond',
             size=10,
-            # color = colors[i],
+            color="#FF6692",
             line_color='rgb(40,40,40)',
             line_width=0.9,
             sizemode='area'
