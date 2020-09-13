@@ -843,7 +843,6 @@ def build_bonus_table(jsonified_cleaned_data):
      Input('bonus_table', 'selected_rows')]
 )
 def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_rows):
-    print(slctd_row_indices)
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     md_name = "All"
     if slctd_row_indices:
