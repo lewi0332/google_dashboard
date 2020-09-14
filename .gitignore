@@ -129,5 +129,4 @@ dmypy.json
 .pyre/
 code.gs
 credentials.json
-quickstart.py
 .vscode/settings.json
