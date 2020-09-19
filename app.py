@@ -33,6 +33,8 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 # The ID and range of a google spreadsheet.
 SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
 RANGE_NAME = os.environ['RANGE_NAME']
+# SPREADSHEET_ID = ''
+# RANGE_NAME = ''
 
 
 def get_google_sheet():
@@ -90,6 +92,7 @@ def gsheet2df(gsheet):
 server = Flask(__name__)
 
 PASS_ = os.environ['VALID_USERNAME_PASSWORD_PAIRS']
+# PASS_ = ''
 VALID_USERNAME_PASSWORD_PAIRS = {'demo': PASS_}
 
 
@@ -535,11 +538,11 @@ app.layout = html.Div(
 def label_totals(jsonified_cleaned_data):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     total_bob = df[['demo_bob', 'festival_bob', 'vip_bob',
-                    'other_event_bob']].sum().sum()
+                    'other_activation_bob']].sum().sum()
     total_bob_text = f'''{total_bob}'''
     total_activations = len(df)
     total_activations_text = f'''{total_activations}'''
-    total_staff = df['staff_count'].sum()
+    total_staff = df['clinic_staff_count'].sum()
     total_staff_text = f'''{total_staff}'''
     return total_bob_text, total_activations_text, total_staff_text
 
@@ -552,11 +555,11 @@ def build_main_map(jsonified_cleaned_data):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     scale = .07
     main = [('demo_bob', "Demo"),
-            ('staff_count', "Clinic"),
+            ('clinic_staff_count', "Clinic"),
             ('festival_bob', 'Festival'),
             ('vip_bob', 'VIP Event'),
             ('trail_building_total_attendance', "Trail Day"),
-            ('other_event_bob', 'Other Test Rides')]
+            ('other_activation_bob', 'Other Test Rides')]
     fig = go.Figure()
     for i in main:
         key = i[0]
@@ -580,12 +583,12 @@ def build_main_map(jsonified_cleaned_data):
         )
         )
     fig.add_trace(go.Scattergeo(
-        lon=df.loc[~df['shop_assist_retail_partner'].isnull(),
+        lon=df.loc[~df['shop_assist_retailer'].isnull(),
                    'longitude'],
-        lat=df.loc[~df['shop_assist_retail_partner'].isnull(), 'latitude'],
-        text=df.loc[~df['shop_assist_retail_partner'].isnull(),
+        lat=df.loc[~df['shop_assist_retailer'].isnull(), 'latitude'],
+        text=df.loc[~df['shop_assist_retailer'].isnull(),
                     'brand_developer'],
-        customdata=df['shop_assist_retail_partner'].loc[~df['shop_assist_retail_partner'].isnull()],
+        customdata=df['shop_assist_retailer'].loc[~df['shop_assist_retailer'].isnull()],
         marker=dict(
             symbol='star-diamond',
             size=10,
@@ -660,11 +663,11 @@ def label_filtered_bob(jsonified_cleaned_data, BD, ride_type):
                 (df['discipline'].isin(ride_type))]
 
     filtered_bob = df[['demo_bob', 'festival_bob', 'vip_bob',
-                       'other_event_bob']].sum().sum()
+                       'other_activation_bob']].sum().sum()
     filtered_bob_text = f'''{filtered_bob}'''
     filtered_activations = len(df)
     filtered_activations_text = f'''{filtered_activations}'''
-    filtered_staff = df['staff_count'].sum()
+    filtered_staff = df['clinic_staff_count'].sum()
     filtered_staff_text = f'''{filtered_staff}'''
     return filtered_bob_text, filtered_activations_text, filtered_staff_text
 
@@ -685,9 +688,9 @@ def build_second_map(jsonified_cleaned_data, BD, ride_type):
     df = df.loc[(df['brand_developer'].isin(BD)) &
                 (df['discipline'].isin(ride_type))]
 
-    df['agg'] = df[['demo_bob', 'staff_count', 'festival_total_attendance',
+    df['agg'] = df[['demo_bob', 'clinic_staff_count', 'festival_total_attendance',
                     'festival_bob', 'vip_total_attendance', 'vip_bob',
-                    'other_event_bob']].sum(axis=1)
+                    'other_activation_bob']].sum(axis=1)
 
     fig = go.Figure()
     scale = .1
@@ -711,12 +714,12 @@ def build_second_map(jsonified_cleaned_data, BD, ride_type):
         )
         )
     fig.add_trace(go.Scattergeo(
-        lon=df.loc[~df['shop_assist_retail_partner'].isnull(),
+        lon=df.loc[~df['shop_assist_retailer'].isnull(),
                    'longitude'],
-        lat=df.loc[~df['shop_assist_retail_partner'].isnull(), 'latitude'],
-        text=df.loc[~df['shop_assist_retail_partner'].isnull(),
+        lat=df.loc[~df['shop_assist_retailer'].isnull(), 'latitude'],
+        text=df.loc[~df['shop_assist_retailer'].isnull(),
                     'brand_developer'],
-        customdata=df['shop_assist_retail_partner'].loc[~df['shop_assist_retail_partner'].isnull()],
+        customdata=df['shop_assist_retailer'].loc[~df['shop_assist_retailer'].isnull()],
         marker=dict(
             symbol='star-diamond',
             size=10,
@@ -767,13 +770,13 @@ def build_quater_dropdown(jsonified_cleaned_data):
 def build_bonus_table(jsonified_cleaned_data):
     df = pd.read_json(jsonified_cleaned_data, orient='split')
     clinics = df.loc[df['activation_type'] == 'Clinic'].groupby(
-        ['brand_developer']).agg({'event': 'count'})
+        ['brand_developer']).agg({'event_name': 'count'})
     activations = df.loc[(df['activation_type'] != 'Clinic') & (
-        df['activation_type'] != 'Trail Day')].groupby(['brand_developer']).agg({'event': 'count'})
+        df['activation_type'] != 'Trail Day')].groupby(['brand_developer']).agg({'event_name': 'count'})
     trail_day = df.loc[df['activation_type'] == 'Trail building day'].groupby(
-        ['brand_developer']).agg({'event': 'count'})
+        ['brand_developer']).agg({'event_name': 'count'})
     df = pd.DataFrame(data={'brand_developer': list(df.brand_developer),
-                            'total_bob': list(df[['demo_bob', 'festival_bob', 'vip_bob', 'other_event_bob']].sum(axis=1))
+                            'total_bob': list(df[['demo_bob', 'festival_bob', 'vip_bob', 'other_activation_bob']].sum(axis=1))
                             }
                       ).set_index('brand_developer')
     df = df.groupby('brand_developer').sum()
@@ -803,13 +806,13 @@ def build_bar(jsonified_cleaned_data, all_rows_data, slctd_row_indices, slctd_ro
         bd_name = (all_rows_data[slctd_row_indices[0]]['brand_developer'])
         df = df.loc[df['brand_developer'] == bd_name]
     clinics = df.loc[df['activation_type'] == 'Clinic'].groupby(
-        ['Week']).agg({'event': 'count'})
+        ['Week']).agg({'event_name': 'count'})
     activations = df.loc[(df['activation_type'] != 'Clinic') & (
-        df['activation_type'] != 'Trail Day')].groupby(['Week']).agg({'event': 'count'})
+        df['activation_type'] != 'Trail Day')].groupby(['Week']).agg({'event_name': 'count'})
     trail_day = df.loc[df['activation_type'] == 'Trail building day'].groupby(
-        ['Week']).agg({'event': 'count'})
+        ['Week']).agg({'event_name': 'count'})
     df = pd.DataFrame(data={'Week': list(df.Week),
-                            'total_bob': list(df[['demo_bob', 'festival_bob', 'vip_bob', 'other_event_bob']].sum(axis=1))
+                            'total_bob': list(df[['demo_bob', 'festival_bob', 'vip_bob', 'other_activation_bob']].sum(axis=1))
                             }
                       ).set_index('Week')
     df = df.groupby('Week').sum()
@@ -909,6 +912,24 @@ def clean_data(start_date, end_date):
     gsheet = get_google_sheet()  # Use credentials to get entire sheet from API
     # Convert the values into a Pandas DataFrame for data manipulation below
     df = gsheet2df(gsheet)
+    df.columns = ['timestamp', 'brand_developer', 'event_name',
+                  'date',
+                  'Location City (closest)', 'Location State', 'Location Zip Code',
+                  'activation_type', 'discipline',
+                  'demo_retailer', 'demo_bob',
+                  'clinic_retailer', 'clinic_shop_level',
+                  'clinic_staff_count', 'festival_retail_partner',
+                  'festival_total_attendance',
+                  'festival_bob',
+                  'vip_retailer',
+                  'vip_total_attendance',
+                  'vip_bob',
+                  'trail_building_retailer',
+                  'trail_building_total_attendance',
+                  'shop_assist_retailer', 'description',
+                  'other_activation_retailer', 'description',
+                  'other_activation_bob', 'latitude',
+                  'longitude']
     df['date'] = pd.to_datetime(df.date)
     df['Week'] = df['date'].dt.isocalendar().week
     df['quarter'] = df['date'].dt.quarter.astype(str)
@@ -917,11 +938,14 @@ def clean_data(start_date, end_date):
     temp = df.loc[(df['date'] > start_date)
                   & (df['date'] < end_date)].copy()
     integers = ['demo_bob', 'festival_bob', 'vip_bob',
-                'other_event_bob', 'staff_count',
+                'other_activation_bob', 'clinic_staff_count',
+                'festival_total_attendance',
+                'vip_total_attendance',
                 'trail_building_total_attendance']
     temp[integers] = temp[integers].replace(
         '', 0).replace('None', 0).astype(int)
     temp = temp.replace('', np.nan).replace('None', np.nan)
+    print(temp.columns)
     # Return a string object that can be stored inside a Dash Component.
     return temp.to_json(date_format='iso', orient='split')
 
@@ -940,13 +964,33 @@ def clean_quarter_data(quarter):
     """
     gsheet = get_google_sheet()
     df = gsheet2df(gsheet)
+    df.columns = ['timestamp', 'brand_developer', 'event_name',
+                  'date',
+                  'Location City (closest)', 'Location State', 'Location Zip Code',
+                  'activation_type', 'discipline',
+                  'demo_retailer', 'demo_bob',
+                  'clinic_retailer', 'clinic_shop_level',
+                  'clinic_staff_count', 'festival_retail_partner',
+                  'festival_total_attendance',
+                  'festival_bob',
+                  'vip_retailer',
+                  'vip_total_attendance',
+                  'vip_bob',
+                  'trail_building_retailer',
+                  'trail_building_total_attendance',
+                  'shop_assist_retailer', 'description',
+                  'other_activation_retailer', 'description',
+                  'other_activation_bob', 'latitude',
+                  'longitude']
     df['date'] = pd.to_datetime(df.date)
     df['Week'] = df['date'].dt.isocalendar().week
     df['quarter'] = df['date'].dt.quarter.astype(str)
     df['year'] = df['date'].dt.year.astype(str)
     df['year_quarter'] = df['year'] + " Q" + df['quarter']
     integers = ['demo_bob', 'festival_bob', 'vip_bob',
-                'other_event_bob', 'staff_count',
+                'other_activation_bob', 'clinic_staff_count',
+                'festival_total_attendance',
+                'vip_total_attendance',
                 'trail_building_total_attendance']
     df[integers] = df[integers].replace(
         '', 0).replace('None', 0).astype(int)
