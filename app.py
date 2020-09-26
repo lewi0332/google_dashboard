@@ -18,7 +18,6 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import os
-import plotly.graph_objects as go
 from tables import bonus_col, bonus_cell_cond, bonus_data_cond
 
 CELL_PADDING = 15
@@ -75,24 +74,25 @@ def get_google_sheet():
         return values
 
 
-def gsheet2df(gsheet):
-    """ Converts Google sheet data to a Pandas DataFrame.
-    Note: This script assumes that your data contains a header file on the first row!
-    Also note that the Google API returns 'none' from empty cells.
+def gsheet_to_df(values):
+    """ 
+    Converts Google sheet API data to Pandas DataFrame
+
+    Input: Google API service.spreadsheets().get() values
+    Output: Pandas DataFrame with all data from Google Sheet
     """
-    header = gsheet[0]   # Assumes first line is header!
-    values = gsheet[1:]  # Everything else is data.
-    if not values:
+    header = values[0]
+    rows = values[1:]
+    if not rows:
         print('No data found.')
     else:
-        df = pd.DataFrame(columns=header, data=values)
+        df = pd.DataFrame(columns=header, data=rows)
     return df
 
 
 server = Flask(__name__)
 
 PASS_ = os.environ['VALID_USERNAME_PASSWORD_PAIRS']
-# PASS_ = ''
 VALID_USERNAME_PASSWORD_PAIRS = {'demo': PASS_}
 
 
@@ -107,16 +107,17 @@ app.layout = html.Div(
     html.Div([
         dbc.Row(
             dbc.Col([
-                html.Img(id="swordmark",
-                         src="./assets/specialized-wordmark-black-cmyk.jpg",
-                         alt="Specialized Wordmark logo",
+                html.Img(id="wordmark",
+                         src="./assets/fiction_bicycles.png",
+                         alt="Fictional Bicycle company logo",
                          style={
-                             'width': '60%',
-                         }),
-            ],  width={"size": 6, "offest": 1}), justify="left"
+                             'width': '100%',
+                             'padding left': "0px"
+                         })
+            ],  width={"size": 6, "offest": 0}), justify="left"
         ),
         dcc.Markdown("""
-                # **_S-WORKS_** Stoke-o-Meter
+                # Field Marketing Tracker
                 ---
                 -  Select date range
                 -  Click legend names on map to isolate activation types
@@ -511,12 +512,12 @@ app.layout = html.Div(
         ),
         dbc.Row(
             dbc.Col([
-                html.Img(id="sLogo",
-                         src="./assets/Specialized_black_S.jpg",
-                         alt="Specialized Wordmark logo",
+                html.Img(id="Logo",
+                         src="./assets/bikelogo.png",
+                         alt="Bicycle Rider logo",
                          style={
                             #  'width': '30%',
-                             'height': '20%'
+                             'height': '60%'
                          }),
             ], width={"size": 2, "offset": 5}),
         ),
@@ -911,7 +912,7 @@ def clean_data(start_date, end_date):
     """
     gsheet = get_google_sheet()  # Use credentials to get entire sheet from API
     # Convert the values into a Pandas DataFrame for data manipulation below
-    df = gsheet2df(gsheet)
+    df = gsheet_to_df(gsheet)
     df.columns = ['timestamp', 'brand_developer', 'event_name',
                   'date',
                   'Location City (closest)', 'Location State', 'Location Zip Code',
@@ -963,7 +964,7 @@ def clean_quarter_data(quarter):
         2. This date range which returns specific quarter-year time frames
     """
     gsheet = get_google_sheet()
-    df = gsheet2df(gsheet)
+    df = gsheet_to_df(gsheet)
     df.columns = ['timestamp', 'brand_developer', 'event_name',
                   'date',
                   'Location City (closest)', 'Location State', 'Location Zip Code',
