@@ -90,6 +90,60 @@ def gsheet_to_df(values):
     return df
 
 
+def clean_main_data():
+    """
+    Data call to google sheets api.  
+    Repeating this data step to allow for two separate date configurations:
+        1. Main date range selected by the user.
+        2. This date range which returns specific quarter-year time frames
+    """
+    gsheet = get_google_sheet()
+    df = gsheet_to_df(gsheet)
+    df.columns = ['timestamp',
+                  'brand_developer',
+                  'event_name',
+                  'date',
+                  'Location City (closest)',
+                  'Location State',
+                  'Location Zip Code',
+                  'activation_type',
+                  'discipline',
+                  'demo_retailer',
+                  'demo_bob',
+                  'clinic_retailer',
+                  'clinic_shop_level',
+                  'clinic_staff_count',
+                  'festival_retail_partner',
+                  'festival_total_attendance',
+                  'festival_bob',
+                  'vip_retailer',
+                  'vip_total_attendance',
+                  'vip_bob',
+                  'trail_building_retailer',
+                  'trail_building_total_attendance',
+                  'shop_assist_retailer',
+                  'shop_assist_description',
+                  'other_activation_retailer',
+                  'other_activation_description',
+                  'other_activation_bob',
+                  'latitude',
+                  'longitude']
+    df['date'] = pd.to_datetime(df.date)
+    df['Week'] = df['date'].dt.isocalendar().week
+    df['quarter'] = df['date'].dt.quarter.astype(str)
+    df['year'] = df['date'].dt.year.astype(str)
+    df['year_quarter'] = df['year'] + " Q" + df['quarter']
+    integers = ['demo_bob', 'festival_bob', 'vip_bob',
+                'other_activation_bob', 'clinic_staff_count',
+                'festival_total_attendance',
+                'vip_total_attendance',
+                'trail_building_total_attendance']
+    df[integers] = df[integers].replace(
+        '', 0).replace('None', 0).astype(int)
+    df = df.replace('', np.nan).replace('None', np.nan)
+    return df.to_json(date_format='iso', orient='split')
+
+
 server = Flask(__name__)
 
 PASS_ = os.environ['VALID_USERNAME_PASSWORD_PAIRS']
@@ -470,8 +524,6 @@ app.layout = html.Div(
                     row_selectable=False,
                     row_deletable=False,
                     style_cell={
-                        # 'minWidth': 10,
-                        # 'maxWidth': 65,
                         'fontSize': 10,
                         'padding': CELL_PADDING,
                     },
@@ -479,26 +531,21 @@ app.layout = html.Div(
                         'backgroundColor': 'white',
                         'fontWeight': 'bold',
                         'font-family': 'plain',
-                        # 'maxWidth': 65,
-                        # 'minWidth': 10,
                         'textAlign': 'center',
                         'padding': CELL_PADDING,
                     },
                     style_cell_conditional=bonus_cell_cond,
                     style_data={
                         'whiteSpace': 'normal',
-                        # 'height': 'auto',
                         'font-family': 'plain light',
                         'font-weight': 'light',
                         'color': 'grey',
                         'padding': DATA_PADDING,
-                        # 'minWidth': 10,
                     },
                     style_data_conditional=bonus_data_cond,
                     style_table={
                         'overflowX': 'scroll',
                         'height': '500px',
-                        # 'width': '90%',
                         'page_size': 10,
                         'minWidth': 10,
                         'padding': TABLE_PADDING
@@ -516,16 +563,16 @@ app.layout = html.Div(
                          src="./assets/bikelogo.png",
                          alt="Bicycle Rider logo",
                          style={
-                            #  'width': '30%',
                              'height': '60%'
                          }),
             ], width={"size": 2, "offset": 5}),
         ),
+        html.Div(id='intermediate_value_main',
+                 children=clean_main_data(),
+                 style={'display': 'none'}),
         html.Div(id='intermediate_value_date', style={'display': 'none'}),
         html.Div(id='intermediate_value_quarter',
                  style={'display': 'none'}),
-        # html.Div(id='intermediate_value_quarter_bar',
-        #          style={'display': 'none'}),
     ]
     ), style={"padding": "100px"})
 
@@ -902,100 +949,23 @@ def build_main_table(jsonified_cleaned_data):
 
 @ app.callback(
     Output('intermediate_value_date', 'children'),
-    [Input('dt-picker-range', 'start_date'),
+    [Input('intermediate_value_main', 'children'),
+     Input('dt-picker-range', 'start_date'),
      Input('dt-picker-range', 'end_date')])
-def clean_data(start_date, end_date):
-    """ 
-    Main data gathering step. 
-    Calls google api to retrieve data from the worksheet. 
-    This function creates a data dict inside a component in order to eliminate a global dataframe variable.
-    """
-    gsheet = get_google_sheet()  # Use credentials to get entire sheet from API
-    # Convert the values into a Pandas DataFrame for data manipulation below
-    df = gsheet_to_df(gsheet)
-    df.columns = ['timestamp', 'brand_developer', 'event_name',
-                  'date',
-                  'Location City (closest)', 'Location State', 'Location Zip Code',
-                  'activation_type', 'discipline',
-                  'demo_retailer', 'demo_bob',
-                  'clinic_retailer', 'clinic_shop_level',
-                  'clinic_staff_count', 'festival_retail_partner',
-                  'festival_total_attendance',
-                  'festival_bob',
-                  'vip_retailer',
-                  'vip_total_attendance',
-                  'vip_bob',
-                  'trail_building_retailer',
-                  'trail_building_total_attendance',
-                  'shop_assist_retailer', 'description',
-                  'other_activation_retailer', 'description',
-                  'other_activation_bob', 'latitude',
-                  'longitude']
-    df['date'] = pd.to_datetime(df.date)
-    df['Week'] = df['date'].dt.isocalendar().week
-    df['quarter'] = df['date'].dt.quarter.astype(str)
-    df['year'] = df['date'].dt.year.astype(str)
-    df['year_quarter'] = df['year'] + " Q" + df['quarter']
+def clean_date_data(jsonified_cleaned_data, start_date, end_date):
+    df = pd.read_json(jsonified_cleaned_data, orient='split')
     temp = df.loc[(df['date'] > start_date)
                   & (df['date'] < end_date)].copy()
-    integers = ['demo_bob', 'festival_bob', 'vip_bob',
-                'other_activation_bob', 'clinic_staff_count',
-                'festival_total_attendance',
-                'vip_total_attendance',
-                'trail_building_total_attendance']
-    temp[integers] = temp[integers].replace(
-        '', 0).replace('None', 0).astype(int)
-    temp = temp.replace('', np.nan).replace('None', np.nan)
-    print(temp.columns)
-    # Return a string object that can be stored inside a Dash Component.
     return temp.to_json(date_format='iso', orient='split')
 
 
 @ app.callback(
     Output('intermediate_value_quarter', 'children'),
-    #  Output('intermediate_value_quarter_bar', 'children')
-    [Input('quarter_dropdown', 'value')]
+    [Input('intermediate_value_main', 'children'),
+     Input('quarter_dropdown', 'value')]
 )
-def clean_quarter_data(quarter):
-    """
-    Data call to google sheets api.  
-    Repeating this data step to allow for two separate date configurations:
-        1. Main date range selected by the user.
-        2. This date range which returns specific quarter-year time frames
-    """
-    gsheet = get_google_sheet()
-    df = gsheet_to_df(gsheet)
-    df.columns = ['timestamp', 'brand_developer', 'event_name',
-                  'date',
-                  'Location City (closest)', 'Location State', 'Location Zip Code',
-                  'activation_type', 'discipline',
-                  'demo_retailer', 'demo_bob',
-                  'clinic_retailer', 'clinic_shop_level',
-                  'clinic_staff_count', 'festival_retail_partner',
-                  'festival_total_attendance',
-                  'festival_bob',
-                  'vip_retailer',
-                  'vip_total_attendance',
-                  'vip_bob',
-                  'trail_building_retailer',
-                  'trail_building_total_attendance',
-                  'shop_assist_retailer', 'description',
-                  'other_activation_retailer', 'description',
-                  'other_activation_bob', 'latitude',
-                  'longitude']
-    df['date'] = pd.to_datetime(df.date)
-    df['Week'] = df['date'].dt.isocalendar().week
-    df['quarter'] = df['date'].dt.quarter.astype(str)
-    df['year'] = df['date'].dt.year.astype(str)
-    df['year_quarter'] = df['year'] + " Q" + df['quarter']
-    integers = ['demo_bob', 'festival_bob', 'vip_bob',
-                'other_activation_bob', 'clinic_staff_count',
-                'festival_total_attendance',
-                'vip_total_attendance',
-                'trail_building_total_attendance']
-    df[integers] = df[integers].replace(
-        '', 0).replace('None', 0).astype(int)
-    df = df.replace('', np.nan).replace('None', np.nan)
+def clean_quarter_data(jsonified_cleaned_data, quarter):
+    df = pd.read_json(jsonified_cleaned_data, orient='split')
     df = df.loc[df['year_quarter'] == quarter]
     return df.to_json(date_format='iso', orient='split')
 
